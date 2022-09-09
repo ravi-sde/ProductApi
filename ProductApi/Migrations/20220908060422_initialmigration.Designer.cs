@@ -9,8 +9,8 @@ using ProductApi.DAL;
 namespace ProductApi.Migrations
 {
     [DbContext(typeof(ProductDbContext))]
-    [Migration("20220905072222_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20220908060422_initialmigration")]
+    partial class initialmigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -33,8 +33,8 @@ namespace ProductApi.Migrations
                     b.Property<string>("ProductName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Units")
-                        .HasColumnType("int");
+                    b.Property<string>("Units")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

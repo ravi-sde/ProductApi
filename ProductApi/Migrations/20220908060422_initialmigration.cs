@@ -2,7 +2,7 @@
 
 namespace ProductApi.Migrations
 {
-    public partial class InitialMigration : Migration
+    public partial class initialmigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -14,7 +14,7 @@ namespace ProductApi.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ProductName = table.Column<string>(nullable: true),
                     ProductDescription = table.Column<string>(nullable: true),
-                    Units = table.Column<int>(nullable: false)
+                    Units = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {

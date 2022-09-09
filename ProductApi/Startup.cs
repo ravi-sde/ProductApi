@@ -1,21 +1,15 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Web;
+using Microsoft.OpenApi.Models;
 using ProductApi.DAL;
+using ProductApi.Service.ServiceImplementation;
+using ProductApi.Service.ServiceInterface;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ProductApi
 {
@@ -26,7 +20,7 @@ namespace ProductApi
             Configuration = configuration;
         }
 
-        private static readonly string CustomApiScheme = "CustomApiScheme";
+        
 
         public IConfiguration Configuration { get; }
 
@@ -34,33 +28,10 @@ namespace ProductApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddScoped<IProductService, ProductService>();
             services.AddDbContext<ProductDbContext>(item => item.UseSqlServer(Configuration.GetConnectionString("myconn")));
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = AzureADDefaults.CookieScheme;
-                options.DefaultChallengeScheme = CustomApiScheme;
-                options.DefaultSignInScheme = AzureADDefaults.CookieScheme;
-            })
-           .AddAzureAD(options =>
-           {
-               Configuration.Bind("AzureAd", options);
-           })
-           .AddScheme<AuthenticationSchemeOptions, CustomApiAuthenticationHandler>(CustomApiScheme, options => { });
 
-            services.Configure<CookieAuthenticationOptions>(AzureADDefaults.CookieScheme, options =>
-            {
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Lax;
-                options.Cookie.MaxAge = new TimeSpan(7, 0, 0, 0);
-            });
-
-            services.Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, options =>
-            {
-                options.Authority = options.Authority + "/v2.0/";         // Microsoft identity platform
-                options.TokenValidationParameters.ValidateIssuer = false; // accept several tenants (here simplified)
-            });
-
+            services.AddMicrosoftIdentityWebApiAuthentication(Configuration);
             //Allowing the Cors Policy , in order to call the web API from different domain 
             services.AddCors(options =>
             {
@@ -75,7 +46,32 @@ namespace ProductApi
             });
             //Allow Cors Policy end 
 
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(c=> {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = " Product API", Version = "v1" });
+
+                c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type= Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
+                }) ;
+
+                c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

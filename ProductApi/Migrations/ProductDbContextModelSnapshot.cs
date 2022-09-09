@@ -31,8 +31,8 @@ namespace ProductApi.Migrations
                     b.Property<string>("ProductName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Units")
-                        .HasColumnType("int");
+                    b.Property<string>("Units")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
